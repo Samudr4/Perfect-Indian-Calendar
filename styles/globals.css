@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base semantic tokens - High Visibility Light (White) Mode & Sleek Dark Mode */
+:root {
+  /* Light Mode — High Contrast, Clean, Crisp, Maximum Visibility */
+  --bg: #eef1f5; /* Cool slate-zinc canvas so pure-white cards stand out crisply */
+  --surface: #ffffff; /* Crisp pure-white card surface */
+  --surface-elevated: #f8fafc; /* Subtle slate-50 elevation */
+  --text-primary: #0f172a; /* Rich slate-900 for maximum readability */
+  --text-secondary: #334155; /* Slate-700 for legible secondary text */
+  --text-tertiary: #64748b; /* Slate-500 for visible muted labels */
+  --border: #cbd5e1; /* Crisp slate-300 border for well-defined outlines */
+  --border-subtle: #e2e8f0; /* Slate-200 for internal dividers */
+  --focus-ring: #0f172a;
+
+  --accent: #0f172a;
+  --accent-soft: #f1f5f9;
+  --accent-contrast: #ffffff;
+  --today: #1d4ed8;
+  --today-soft: #eff6ff;
+  --selection: #f1f5f9;
+
+  --clock-bezel: #94a3b8;
+  --clock-face: #ffffff;
+  --clock-hand: #0f172a;
+  --clock-second: #e11d48;
+}
+
+/* Dark Mode */
+[data-theme="dark"],
+.dark {
+  --bg: #090a0b;
+  --surface: #131416;
+  --surface-elevated: #1a1b1f;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --border: #27272a;
+  --border-subtle: #1f2023;
+  --focus-ring: #f4f4f5;
+
+  --accent: #f4f4f5;
+  --accent-soft: #27272a;
+  --accent-contrast: #090a0b;
+  --today: #3b82f6;
+  --today-soft: rgba(59, 130, 246, 0.16);
+  --selection: rgba(244, 244, 245, 0.1);
+
+  --clock-bezel: #27272a;
+  --clock-face: #131416;
+  --clock-hand: #f4f4f5;
+  --clock-second: #f43f5e;
+}
+
+/* Global Reset and Typography */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--bg);
+  color: var(--text-primary);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+/* Modern Clean Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Accessible focus ring */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
