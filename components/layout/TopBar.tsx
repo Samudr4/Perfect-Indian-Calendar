@@ -53,9 +53,9 @@ export function TopBar({ onSearchClick, className = "" }: TopBarProps) {
             id="quick-search-btn"
             onClick={onSearchClick}
             aria-label="Search dates, people, and events (Cmd+K)"
-            className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1.5 rounded-control border border-border bg-surface-elevated text-xs text-text-tertiary hover:border-text-secondary hover:text-text-primary transition-colors"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 rounded-control border border-border bg-surface-elevated text-xs text-text-tertiary hover:border-text-secondary hover:text-text-primary transition-colors"
           >
-            <Search className="w-3.5 h-3.5 text-text-tertiary" />
+            <Search className="w-3.5 h-3.5 text-today" />
             <span className="hidden md:inline">Search...</span>
             <kbd className="hidden md:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded-[4px] bg-surface border border-border text-text-tertiary">
               ⌘K

@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
-import { formatEditorialDate, PROTOTYPE_TODAY_ISO } from "@/lib/calendar/calendar-utils";
-import { Clock, Sparkles } from "lucide-react";
+import { formatEditorialDate, getTodayIso } from "@/lib/calendar/calendar-utils";
+import { useTheme } from "@/lib/themes/ThemeProvider";
+import { getEntriesForDate } from "@/lib/calendar/entry-resolver";
+import { Clock, Sparkles, BookOpen, Calendar as CalendarIcon } from "lucide-react";
 
 interface DayViewProps {
   selectedDate: string;
@@ -30,8 +32,10 @@ const DAY_HOURS = [
 ];
 
 export function DayView({ selectedDate, className = "" }: DayViewProps) {
-  const isToday = selectedDate === PROTOTYPE_TODAY_ISO;
+  const { selectedStateId } = useTheme();
+  const isToday = selectedDate === getTodayIso();
   const formattedDate = formatEditorialDate(selectedDate);
+  const entries = getEntriesForDate(selectedDate, selectedStateId);
 
   return (
     <div className={`flex flex-col w-full ${className}`}>
@@ -61,10 +65,54 @@ export function DayView({ selectedDate, className = "" }: DayViewProps) {
         </div>
       </div>
 
+      {/* Featured Observances Banner if entries exist */}
+      {entries.length > 0 && (
+        <div className="mb-5 p-3.5 rounded-control bg-today-soft border border-today/30 shadow-xs">
+          <div className="flex items-center gap-2 text-xs font-bold text-today mb-2">
+            <Sparkles className="w-4 h-4 text-today" />
+            <span>Recorded Observances for {formattedDate}</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {entries.map((entry) => (
+              <div
+                key={entry.id}
+                className="p-2.5 rounded-control bg-surface border border-border shadow-2xs flex flex-col"
+              >
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <span className="text-xs font-bold text-text-primary">
+                    {entry.title}
+                  </span>
+                  <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-[4px] bg-bg border border-border-subtle text-text-secondary">
+                    {entry.category}
+                  </span>
+                </div>
+                {entry.subtitle && (
+                  <div className="text-[11px] font-medium text-today mb-1">
+                    {entry.subtitle}
+                  </div>
+                )}
+                <p className="text-[11px] text-text-secondary line-clamp-2 leading-relaxed">
+                  {entry.summary}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Hourly Timeline Rows */}
       <div className="divide-y divide-border-subtle">
-        {DAY_HOURS.map((hour) => {
-          const isSampleHour = isToday && hour === "10:00";
+        {DAY_HOURS.map((hour, idx) => {
+          // Map entries across morning & afternoon slots (e.g., 09:00, 11:00, 15:00)
+          const matchedEntry =
+            hour === "09:00" && entries[0]
+              ? entries[0]
+              : hour === "11:00" && entries[1]
+              ? entries[1]
+              : hour === "15:00" && entries[2]
+              ? entries[2]
+              : undefined;
+
           return (
             <div
               key={hour}
@@ -74,14 +122,21 @@ export function DayView({ selectedDate, className = "" }: DayViewProps) {
                 {hour}
               </div>
               <div className="flex-1 min-h-[38px] p-2 rounded-control border border-border group-hover:border-text-secondary bg-surface transition-colors">
-                {isSampleHour ? (
-                  <div className="flex items-center gap-2 p-2 rounded-control bg-today-soft border border-today/30 text-xs font-medium text-today">
-                    <Sparkles className="w-3.5 h-3.5 text-today" />
-                    <span>Historical event and anniversary records loaded here</span>
+                {matchedEntry ? (
+                  <div className="flex items-start gap-2 p-2 rounded-control bg-today-soft border border-today/30 text-xs font-medium text-text-primary">
+                    <Sparkles className="w-3.5 h-3.5 text-today shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-bold text-text-primary">
+                        {matchedEntry.title}
+                      </div>
+                      <div className="text-[11px] text-today font-medium">
+                        {matchedEntry.subtitle || matchedEntry.category}
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-[11px] text-text-secondary/70 italic">
-                    No scheduled entries
+                    No scheduled event
                   </div>
                 )}
               </div>

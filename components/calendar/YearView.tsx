@@ -8,6 +8,8 @@ import {
   formatIsoDate,
 } from "@/lib/calendar/calendar-utils";
 
+import { useTheme } from "@/lib/themes/ThemeProvider";
+
 interface YearViewProps {
   year: number;
   selectedDate: string;
@@ -23,12 +25,14 @@ export function YearView({
   onSelectDate,
   className = "",
 }: YearViewProps) {
+  const { selectedStateId } = useTheme();
+
   return (
     <div
       className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 ${className}`}
     >
       {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => {
-        const days = getMonthGrid(year, month);
+        const days = getMonthGrid(year, month, undefined, selectedStateId);
         const monthName = MONTH_NAMES[month - 1];
 
         return (
@@ -69,7 +73,7 @@ export function YearView({
                     key={`${d.isoDate}-${idx}`}
                     type="button"
                     onClick={() => onSelectDate(d.isoDate)}
-                    className={`h-6 w-full rounded-[4px] flex items-center justify-center transition-colors ${
+                    className={`h-6 w-full rounded-[4px] relative flex items-center justify-center transition-colors ${
                       isSelected
                         ? "bg-text-primary text-bg font-bold shadow-xs"
                         : d.isToday
@@ -79,7 +83,10 @@ export function YearView({
                         : "text-text-tertiary/40"
                     }`}
                   >
-                    {d.day}
+                    <span>{d.day}</span>
+                    {d.hasContent && d.isCurrentMonth && !isSelected && !d.isToday && (
+                      <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-today" />
+                    )}
                   </button>
                 );
               })}

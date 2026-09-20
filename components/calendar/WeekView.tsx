@@ -8,6 +8,9 @@ import {
   formatEditorialDate,
 } from "@/lib/calendar/calendar-utils";
 
+import { useTheme } from "@/lib/themes/ThemeProvider";
+import { getEntriesForDate } from "@/lib/calendar/entry-resolver";
+
 interface WeekViewProps {
   selectedDate: string;
   onSelectDate: (isoDate: string) => void;
@@ -35,9 +38,11 @@ export function WeekView({
   onSelectDate,
   className = "",
 }: WeekViewProps) {
+  const { selectedStateId } = useTheme();
+
   const weekDays: CalendarDayInfo[] = useMemo(() => {
-    return getWeekDays(selectedDate);
-  }, [selectedDate]);
+    return getWeekDays(selectedDate, undefined, selectedStateId);
+  }, [selectedDate, selectedStateId]);
 
   return (
     <div className={`flex flex-col w-full overflow-x-auto ${className}`}>
@@ -45,6 +50,7 @@ export function WeekView({
       <div className="grid grid-cols-7 gap-1 sm:gap-2 pb-3 border-b border-border text-center">
         {weekDays.map((day) => {
           const isSelected = day.isoDate === selectedDate;
+          const dayEntries = getEntriesForDate(day.isoDate, selectedStateId);
           return (
             <button
               key={day.isoDate}
@@ -72,11 +78,15 @@ export function WeekView({
               >
                 {day.day}
               </span>
-              {day.isToday && (
+              {day.isToday ? (
                 <span className="text-[9px] font-bold uppercase tracking-wider px-1 py-0.2 rounded-[4px] bg-today text-white mt-1">
                   Today
                 </span>
-              )}
+              ) : dayEntries.length > 0 ? (
+                <span className="text-[9px] font-bold uppercase tracking-wider px-1 py-0.2 rounded-[4px] bg-today/10 text-today mt-1">
+                  {dayEntries.length} {dayEntries.length === 1 ? "Event" : "Events"}
+                </span>
+              ) : null}
             </button>
           );
         })}
@@ -88,8 +98,9 @@ export function WeekView({
           <div key={hour} className="grid grid-cols-7 gap-1 sm:gap-2 py-3">
             {weekDays.map((day) => {
               const isSelected = day.isoDate === selectedDate;
-              // Sample demonstration entry on today at 10:00
-              const hasSampleEvent = day.isToday && hour === "10:00";
+              const entries = getEntriesForDate(day.isoDate, selectedStateId);
+              // Show entry badge during morning hours e.g. 10:00
+              const primaryEntry = hour === "10:00" ? entries[0] : undefined;
 
               return (
                 <div
@@ -104,9 +115,9 @@ export function WeekView({
                   <div className="text-[10px] font-mono text-text-tertiary">
                     {hour}
                   </div>
-                  {hasSampleEvent && (
-                    <div className="mt-1 p-1 rounded-[4px] bg-today-soft border border-today/30 text-[10px] font-medium text-today leading-tight">
-                      Anniversary Observance
+                  {primaryEntry && (
+                    <div className="mt-1 p-1 rounded-[4px] bg-today-soft border border-today/30 text-[10px] font-medium text-today leading-tight line-clamp-2">
+                      {primaryEntry.title}
                     </div>
                   )}
                 </div>

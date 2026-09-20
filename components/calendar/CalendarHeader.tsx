@@ -46,8 +46,8 @@ export function CalendarHeader({
           id="today-btn"
           onClick={onJumpToToday}
           className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-control border border-today/30 bg-today-soft text-today hover:bg-today hover:text-white active:scale-95 transition-all duration-150 shadow-2xs shrink-0"
-          aria-label="Jump to Today (8 September 2026)"
-          title="Jump to Today (8 September 2026)"
+          aria-label="Jump to Today"
+          title="Jump to Today"
         >
           <RotateCcw className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
           <span className="hidden xs:inline">Today</span>

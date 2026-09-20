@@ -1,16 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { TopBar } from "./TopBar";
+import { CommandPalette } from "@/components/search/CommandPalette";
 import { CalendarHeader } from "@/components/calendar/CalendarHeader";
 import { MonthGrid } from "@/components/calendar/MonthGrid";
 import { WeekView } from "@/components/calendar/WeekView";
 import { DayView } from "@/components/calendar/DayView";
 import { YearView } from "@/components/calendar/YearView";
 import { DateDetailsPanel } from "@/components/date-details/DateDetailsPanel";
+import { getFlagshipDateForGeography } from "@/lib/calendar/entry-resolver";
 import {
-  PROTOTYPE_TODAY_ISO,
+  getTodayIso,
   CalendarViewType,
   parseIsoDate,
   getPreviousMonth,
@@ -53,14 +55,42 @@ export function AppShell() {
   const { selectedStateId } = useTheme();
   const currentState = getGeographyById(selectedStateId);
 
-  // Prototype Anchor: September 2026, today = 2026-09-08
-  const [currentYear, setCurrentYear] = useState<number>(2026);
-  const [currentMonth, setCurrentMonth] = useState<number>(9);
-  const [selectedDate, setSelectedDate] = useState<string>(PROTOTYPE_TODAY_ISO);
+  // Dynamic initialization with real current date
+  const [currentYear, setCurrentYear] = useState<number>(() => parseIsoDate(getTodayIso()).year);
+  const [currentMonth, setCurrentMonth] = useState<number>(() => parseIsoDate(getTodayIso()).month);
+  const [selectedDate, setSelectedDate] = useState<string>(() => getTodayIso());
   const [currentView, setCurrentView] = useState<CalendarViewType>("month");
 
   // Mobile drawer state — starts closed, opens on tap or timeline click
   const [isDetailsOpenMobile, setIsDetailsOpenMobile] = useState<boolean>(false);
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+
+  // Global Cmd+K / Ctrl+K shortcut listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Automatically update calendar dates and month when state is changed above
+  const prevGeoRef = useRef(selectedStateId);
+  useEffect(() => {
+    if (prevGeoRef.current !== selectedStateId) {
+      prevGeoRef.current = selectedStateId;
+      const targetDate = getFlagshipDateForGeography(selectedStateId, currentYear);
+      if (targetDate) {
+        setSelectedDate(targetDate);
+        const parts = parseIsoDate(targetDate);
+        setCurrentYear(parts.year);
+        setCurrentMonth(parts.month);
+      }
+    }
+  }, [selectedStateId, currentYear]);
 
   // Unified Previous Navigation Handler
   const handlePrevious = () => {
@@ -109,9 +139,11 @@ export function AppShell() {
   };
 
   const handleJumpToToday = () => {
-    setCurrentYear(2026);
-    setCurrentMonth(9);
-    setSelectedDate(PROTOTYPE_TODAY_ISO);
+    const today = getTodayIso();
+    const parts = parseIsoDate(today);
+    setCurrentYear(parts.year);
+    setCurrentMonth(parts.month);
+    setSelectedDate(today);
   };
 
   const handleSelectDate = (isoDate: string) => {
@@ -137,7 +169,7 @@ export function AppShell() {
   return (
     <div className="min-h-screen flex flex-col bg-bg text-text-primary transition-colors duration-200">
       {/* Top Bar Header */}
-      <TopBar />
+      <TopBar onSearchClick={() => setIsSearchOpen(true)} />
 
       {/* Primary Expansive Layout Area */}
       <main className="flex-1 max-w-[1720px] w-full mx-auto p-3 sm:p-5 lg:p-6 pb-20 md:pb-6">
@@ -216,7 +248,7 @@ export function AppShell() {
                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-today uppercase tracking-wider">
                     <Sparkles className="w-3 h-3 shrink-0" />
                     <span className="truncate">
-                      {selectedDate === PROTOTYPE_TODAY_ISO ? "Today" : "Selected"} · {currentState.name}
+                      {selectedDate === getTodayIso() ? "Today" : "Selected"} · {currentState.name}
                     </span>
                   </div>
                   <div className="text-xs font-bold text-text-primary mt-0.5 truncate">
@@ -242,6 +274,7 @@ export function AppShell() {
           >
             <DateDetailsPanel
               selectedDate={selectedDate}
+              onSelectDate={handleSelectDate}
               className="block"
             />
           </section>
@@ -260,6 +293,7 @@ export function AppShell() {
             <div className="w-12 h-1 bg-border rounded-full mx-auto mb-3 shrink-0" />
             <DateDetailsPanel
               selectedDate={selectedDate}
+              onSelectDate={handleSelectDate}
               onClose={() => setIsDetailsOpenMobile(false)}
               className="border-none shadow-none p-0 overflow-y-auto"
             />
@@ -319,6 +353,12 @@ export function AppShell() {
           <span className="text-[10px] font-semibold">Timeline</span>
         </button>
       </nav>
+      {/* Quick Search Command Palette */}
+      <CommandPalette
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onSelectDate={handleSelectDate}
+      />
     </div>
   );
 }

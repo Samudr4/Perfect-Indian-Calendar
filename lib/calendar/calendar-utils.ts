@@ -3,9 +3,23 @@
  * Designed to be timezone-independent using date-only ISO strings (YYYY-MM-DD).
  */
 
-export const PROTOTYPE_TODAY_ISO = "2026-09-08";
+/**
+ * Returns today's ISO date string (YYYY-MM-DD) based on the current system/local time.
+ */
+export function getTodayIso(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, "0");
+  const day = now.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export const PROTOTYPE_TODAY_ISO = getTodayIso();
 
 export type CalendarViewType = "month" | "week" | "day" | "year";
+
+import { getDaySummary, EntryCategory } from "./entry-resolver";
+export type { EntryCategory };
 
 export interface CalendarDayInfo {
   isoDate: string; // YYYY-MM-DD
@@ -16,6 +30,10 @@ export interface CalendarDayInfo {
   isCurrentMonth: boolean;
   isToday: boolean;
   hasContent: boolean;
+  contentCount?: number;
+  categories: EntryCategory[];
+  isHoliday: boolean;
+  holidayTitle?: string;
 }
 
 export const MONTH_NAMES = [
@@ -135,7 +153,8 @@ export function getNextWeekDate(isoDate: string): string {
 export function getMonthGrid(
   year: number,
   month: number,
-  todayIso: string = PROTOTYPE_TODAY_ISO
+  todayIso: string = getTodayIso(),
+  geographyId: string = "assam"
 ): CalendarDayInfo[] {
   const daysInCurrentMonth = getDaysInMonth(year, month);
   const firstDayWeekday = getDayOfWeek(year, month, 1); // 0 (Sun) to 6 (Sat)
@@ -150,6 +169,7 @@ export function getMonthGrid(
     const d = daysInPrevMonth - i;
     const isoDate = formatIsoDate(prevMonthInfo.year, prevMonthInfo.month, d);
     const dayOfWeek = getDayOfWeek(prevMonthInfo.year, prevMonthInfo.month, d);
+    const summary = getDaySummary(isoDate, geographyId);
     days.push({
       isoDate,
       year: prevMonthInfo.year,
@@ -158,7 +178,11 @@ export function getMonthGrid(
       dayOfWeek,
       isCurrentMonth: false,
       isToday: isoDate === todayIso,
-      hasContent: false,
+      hasContent: summary.count > 0,
+      contentCount: summary.count,
+      categories: summary.categories,
+      isHoliday: summary.isHoliday,
+      holidayTitle: summary.holidayTitle,
     });
   }
 
@@ -166,6 +190,7 @@ export function getMonthGrid(
   for (let d = 1; d <= daysInCurrentMonth; d++) {
     const isoDate = formatIsoDate(year, month, d);
     const dayOfWeek = getDayOfWeek(year, month, d);
+    const summary = getDaySummary(isoDate, geographyId);
     days.push({
       isoDate,
       year,
@@ -174,7 +199,11 @@ export function getMonthGrid(
       dayOfWeek,
       isCurrentMonth: true,
       isToday: isoDate === todayIso,
-      hasContent: [8, 15, 23].includes(d),
+      hasContent: summary.count > 0,
+      contentCount: summary.count,
+      categories: summary.categories,
+      isHoliday: summary.isHoliday,
+      holidayTitle: summary.holidayTitle,
     });
   }
 
@@ -185,6 +214,7 @@ export function getMonthGrid(
   for (let d = 1; d <= remainingSlots; d++) {
     const isoDate = formatIsoDate(nextMonthInfo.year, nextMonthInfo.month, d);
     const dayOfWeek = getDayOfWeek(nextMonthInfo.year, nextMonthInfo.month, d);
+    const summary = getDaySummary(isoDate, geographyId);
     days.push({
       isoDate,
       year: nextMonthInfo.year,
@@ -193,7 +223,11 @@ export function getMonthGrid(
       dayOfWeek,
       isCurrentMonth: false,
       isToday: isoDate === todayIso,
-      hasContent: false,
+      hasContent: summary.count > 0,
+      contentCount: summary.count,
+      categories: summary.categories,
+      isHoliday: summary.isHoliday,
+      holidayTitle: summary.holidayTitle,
     });
   }
 
@@ -205,7 +239,8 @@ export function getMonthGrid(
  */
 export function getWeekDays(
   isoDate: string,
-  todayIso: string = PROTOTYPE_TODAY_ISO
+  todayIso: string = getTodayIso(),
+  geographyId: string = "assam"
 ): CalendarDayInfo[] {
   const { year, month, day } = parseIsoDate(isoDate);
   const dow = getDayOfWeek(year, month, day); // 0 (Sun) - 6 (Sat)
@@ -215,6 +250,7 @@ export function getWeekDays(
   for (let i = 0; i < 7; i++) {
     const currentIso = shiftIsoDate(sundayIso, i);
     const parts = parseIsoDate(currentIso);
+    const summary = getDaySummary(currentIso, geographyId);
     days.push({
       isoDate: currentIso,
       year: parts.year,
@@ -223,7 +259,11 @@ export function getWeekDays(
       dayOfWeek: i,
       isCurrentMonth: parts.month === month,
       isToday: currentIso === todayIso,
-      hasContent: [8, 15, 23].includes(parts.day),
+      hasContent: summary.count > 0,
+      contentCount: summary.count,
+      categories: summary.categories,
+      isHoliday: summary.isHoliday,
+      holidayTitle: summary.holidayTitle,
     });
   }
   return days;
